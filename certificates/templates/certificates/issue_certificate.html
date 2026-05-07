@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Issue Certificate</title>
+</head>
+<body>
+
+    <h1>Issue Certificate</h1>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">
+            Issue Certificate
+        </button>
+
+    </form>
+
+</body>
+</html>
