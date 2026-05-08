@@ -5,6 +5,9 @@ from .utils import generate_certificate_hash
 from .forms import VerifyCertificateForm
 from .utils import verify_certificate_hash
 
+def home(request):
+
+    return render(request, 'certificates/home.html')
 
 def issue_certificate(request):
 
