@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from .forms import CertificateForm
 from .models import Certificate
 from .utils import generate_certificate_hash
+from .forms import VerifyCertificateForm
+from .utils import verify_certificate_hash
 
 
 def issue_certificate(request):
@@ -37,4 +39,52 @@ def issue_certificate(request):
 
     return render(request, 'certificates/issue_certificate.html', {
         'form': form
+    })
+
+def verify_certificate(request):
+
+    result = None
+
+    if request.method == 'POST':
+
+        form = VerifyCertificateForm(request.POST)
+
+        if form.is_valid():
+
+            student_name = form.cleaned_data['student_name']
+            course_name = form.cleaned_data['course_name']
+            issue_date = form.cleaned_data['issue_date']
+
+            try:
+
+                # Find certificate in database
+                certificate = Certificate.objects.filter(
+                    student_name=student_name,
+                    course_name=course_name,
+                    issue_date=issue_date
+                ).latest('created_at')
+
+                # Verify hash
+                is_valid = verify_certificate_hash(
+                    student_name,
+                    course_name,
+                    issue_date,
+                    certificate.certificate_hash
+                )
+
+                if is_valid:
+                    result = "VALID CERTIFICATE ✅"
+                else:
+                    result = "INVALID CERTIFICATE ❌"
+
+            except Certificate.DoesNotExist:
+
+                result = "CERTIFICATE NOT FOUND ❌"
+
+    else:
+        form = VerifyCertificateForm()
+
+    return render(request, 'certificates/verify_certificate.html', {
+        'form': form,
+        'result': result
     })

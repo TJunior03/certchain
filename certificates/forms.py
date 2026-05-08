@@ -6,3 +6,11 @@ class CertificateForm(forms.ModelForm):
     class Meta:
         model = Certificate
         fields = ['student_name', 'course_name', 'issue_date']
+
+class VerifyCertificateForm(forms.Form):
+
+    student_name = forms.CharField(max_length=255)
+
+    course_name = forms.CharField(max_length=255)
+
+    issue_date = forms.DateField()
