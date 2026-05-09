@@ -1,27 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Verify Certificate</title>
-</head>
-<body>
+{% extends 'certificates/base.html' %}
+{% block title %}Verify Certificate{% endblock %}
 
+{% block content %}
+<div class="card">
     <h1>Verify Certificate</h1>
+    <h2>Check if a certificate is authentic</h2>
 
-    <form method="POST">
-
-        {% csrf_token %}
-
-        {{ form.as_p }}
-
-        <button type="submit">
-            Verify Certificate
-        </button>
-
-    </form>
-
-    {% if result %}
-        <h2>{{ result }}</h2>
+    {% if result is not None %}
+        {% if result %}
+            <div class="alert alert-success">
+                ✅ Certificate is VALID
+            </div>
+            <p>Student: <strong>{{ certificate.student_name }}</strong></p>
+            <p>Course: <strong>{{ certificate.course_name }}</strong></p>
+            <p>Issue Date: <strong>{{ certificate.issue_date }}</strong></p>
+            <p>Issued by: <strong>{{ certificate.issuer }}</strong></p>
+            <p>SHA-256 Hash:</p>
+            <div class="hash-box">{{ certificate.certificate_hash }}</div>
+        {% else %}
+            <div class="alert alert-error">
+                ❌ Certificate is INVALID — ID not found in the system.
+            </div>
+        {% endif %}
+        <a href="/verify/" class="btn-link">Verify Another</a>
+    {% else %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Certificate ID</label>
+                <input type="text" name="certificate_id"
+                       placeholder="Paste your Certificate ID (UUID)" required>
+            </div>
+            <button type="submit">Verify Certificate</button>
+        </form>
     {% endif %}
-
-</body>
-</html>
+</div>
+{% endblock %}

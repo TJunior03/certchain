@@ -1,22 +1,18 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from .forms import CertificateForm
 from .models import Certificate
-from .utils import generate_certificate_hash
-from .forms import VerifyCertificateForm
-from .utils import verify_certificate_hash
+from .utils import generate_certificate_hash, verify_certificate_hash
+
 
 def home(request):
-
     return render(request, 'certificates/home.html')
 
+
 def issue_certificate(request):
-
     if request.method == 'POST':
-
         form = CertificateForm(request.POST)
 
         if form.is_valid():
-
             certificate = form.save(commit=False)
 
             # Generate SHA-256 hash
@@ -28,14 +24,24 @@ def issue_certificate(request):
 
             certificate.certificate_hash = cert_hash
 
-            # Save issuer (logged-in admin)
+            # Save issuer
             if request.user.is_authenticated:
                 certificate.issuer = request.user
 
-            # Save to database
             certificate.save()
 
-            return redirect('issue_certificate')
+            # Return success WITH the certificate object — triggers the modal
+            return render(request, 'certificates/issue_certificate.html', {
+                'form': CertificateForm(),
+                'success': True,
+                'certificate': certificate
+            })
+
+        else:
+            return render(request, 'certificates/issue_certificate.html', {
+                'form': form,
+                'error': 'Please fix the errors below.'
+            })
 
     else:
         form = CertificateForm()
@@ -44,50 +50,21 @@ def issue_certificate(request):
         'form': form
     })
 
-def verify_certificate(request):
 
+def verify_certificate(request):
     result = None
+    certificate = None
 
     if request.method == 'POST':
+        certificate_id = request.POST.get('certificate_id', '').strip()
 
-        form = VerifyCertificateForm(request.POST)
-
-        if form.is_valid():
-
-            student_name = form.cleaned_data['student_name']
-            course_name = form.cleaned_data['course_name']
-            issue_date = form.cleaned_data['issue_date']
-
-            try:
-
-                # Find certificate in database
-                certificate = Certificate.objects.filter(
-                    student_name=student_name,
-                    course_name=course_name,
-                    issue_date=issue_date
-                ).latest('created_at')
-
-                # Verify hash
-                is_valid = verify_certificate_hash(
-                    student_name,
-                    course_name,
-                    issue_date,
-                    certificate.certificate_hash
-                )
-
-                if is_valid:
-                    result = "VALID CERTIFICATE ✅"
-                else:
-                    result = "INVALID CERTIFICATE ❌"
-
-            except Certificate.DoesNotExist:
-
-                result = "CERTIFICATE NOT FOUND ❌"
-
-    else:
-        form = VerifyCertificateForm()
+        try:
+            certificate = Certificate.objects.get(certificate_id=certificate_id)
+            result = True
+        except Certificate.DoesNotExist:
+            result = False
 
     return render(request, 'certificates/verify_certificate.html', {
-        'form': form,
-        'result': result
+        'result': result,
+        'certificate': certificate
     })

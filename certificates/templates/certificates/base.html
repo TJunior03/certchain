@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CertChain — {% block title %}{% endblock %}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0a0f1e;
+            color: #e0e6f0;
+            min-height: 100vh;
+        }
+
+        nav {
+            background: #0d1b2a;
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #1565c0;
+        }
+
+        nav .logo {
+            font-size: 22px;
+            font-weight: 700;
+            color: #4fc3f7;
+            letter-spacing: 2px;
+        }
+
+        nav a {
+            color: #90caf9;
+            text-decoration: none;
+            margin-left: 24px;
+            font-size: 15px;
+            transition: color 0.2s;
+        }
+
+        nav a:hover { color: #ffffff; }
+
+        .container {
+            max-width: 860px;
+            margin: 60px auto;
+            padding: 0 24px;
+        }
+
+        .card {
+            background: #0d1b2a;
+            border: 1px solid #1565c0;
+            border-radius: 12px;
+            padding: 40px;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #4fc3f7;
+            margin-bottom: 8px;
+        }
+
+        h2 {
+            font-size: 20px;
+            color: #90caf9;
+            margin-bottom: 24px;
+        }
+
+        p { color: #b0bec5; line-height: 1.7; }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #90caf9;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0a0f1e;
+            border: 1px solid #1565c0;
+            border-radius: 8px;
+            color: #e0e6f0;
+            font-size: 15px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input:focus { border-color: #4fc3f7; }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #1565c0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 8px;
+        }
+
+        button:hover { background: #1976d2; }
+
+        .alert {
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+
+        .alert-success {
+            background: #1b5e20;
+            border: 1px solid #4caf50;
+            color: #a5d6a7;
+        }
+
+        .alert-error {
+            background: #7f0000;
+            border: 1px solid #ef5350;
+            color: #ef9a9a;
+        }
+
+        .hash-box {
+            background: #0a0f1e;
+            border: 1px solid #1565c0;
+            border-radius: 8px;
+            padding: 14px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #4fc3f7;
+            word-break: break-all;
+            margin-top: 12px;
+        }
+
+        .btn-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 24px;
+            background: transparent;
+            border: 1px solid #1565c0;
+            border-radius: 8px;
+            color: #90caf9;
+            text-decoration: none;
+            font-size: 14px;
+            width: auto;
+            transition: background 0.2s;
+        }
+
+        .btn-link:hover { background: #1565c020; }
+    </style>
+</head>
+<body>
+    <nav>
+        <span class="logo">⛓ CERTCHAIN</span>
+        <div>
+            <a href="{% url 'home' %}">Home</a>
+            <a href="{% url 'issue_certificate' %}">Issue Certificate</a>
+            <a href="{% url 'verify_certificate' %}" >Verify Certificate</a>
+            <a href="/admin/">Admin</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

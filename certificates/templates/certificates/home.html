@@ -1,27 +1,17 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>CertChain</title>
-</head>
-<body>
+{% extends 'certificates/base.html' %}
+{% block title %}Home{% endblock %}
 
+{% block content %}
+<div class="card">
     <h1>Welcome to CertChain</h1>
-
+    <h2>Tamper-Proof Certificate Verification</h2>
     <p>
-        Blockchain-based certificate verification system
+        CertChain uses SHA-256 cryptographic hashing to issue and verify
+        digital certificates. Any tampering with certificate data is instantly
+        detected. Built on Django, PostgreSQL, Docker, and AWS.
     </p>
-
-    <hr>
-
-    <a href="{% url 'issue_certificate' %}">
-        Issue Certificate
-    </a>
-
-    <br><br>
-
-    <a href="{% url 'verify_certificate' %}">
-        Verify Certificate
-    </a>
-
-</body>
-</html>
+    <br>
+    <a href="{% url 'issue_certificate' %}" class="btn-link">Issue a Certificate</a>
+    <a href="{% url 'verify_certificate' %}" class="btn-link" style="margin-left: 12px;">Verify a Certificate</a>
+</div>
+{% endblock %}
