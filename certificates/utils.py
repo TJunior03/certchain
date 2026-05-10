@@ -19,3 +19,16 @@ def verify_certificate_hash(student_name, course_name, issue_date, stored_hash):
     """
     computed_hash = generate_certificate_hash(student_name, course_name, issue_date)
     return computed_hash == stored_hash
+
+def generate_pdf_hash(pdf_file):
+    """
+    Generate SHA-256 hash from the actual PDF content.
+    Any change to the PDF — even one character — produces
+    a completely different hash.
+    """
+    sha256 = hashlib.sha256()
+    pdf_file.seek(0)
+    for chunk in iter(lambda: pdf_file.read(8192), b''):
+        sha256.update(chunk)
+    pdf_file.seek(0)
+    return sha256.hexdigest()

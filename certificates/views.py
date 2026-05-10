@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from .forms import CertificateForm
 from .models import Certificate
-from .utils import generate_certificate_hash, verify_certificate_hash
+from .utils import generate_certificate_hash, generate_pdf_hash, verify_certificate_hash
 
 
 def home(request):
@@ -10,27 +10,35 @@ def home(request):
 
 def issue_certificate(request):
     if request.method == 'POST':
-        form = CertificateForm(request.POST)
+        form = CertificateForm(request.POST, request.FILES)
 
         if form.is_valid():
             certificate = form.save(commit=False)
 
-            # Generate SHA-256 hash
-            cert_hash = generate_certificate_hash(
-                certificate.student_name,
-                certificate.course_name,
-                certificate.issue_date
-            )
+            # Generate hash — from PDF if uploaded, otherwise from text fields
+            if request.FILES.get('pdf_file'):
+                cert_hash = generate_pdf_hash(request.FILES['pdf_file'])
+            else:
+                cert_hash = generate_certificate_hash(
+                    certificate.student_name,
+                    certificate.course_name,
+                    certificate.issue_date
+                )
+
+            # Check for duplicate
+            if Certificate.objects.filter(certificate_hash=cert_hash).exists():
+                return render(request, 'certificates/issue_certificate.html', {
+                    'form': form,
+                    'error': 'This certificate already exists in the system.'
+                })
 
             certificate.certificate_hash = cert_hash
 
-            # Save issuer
             if request.user.is_authenticated:
                 certificate.issuer = request.user
 
             certificate.save()
 
-            # Return success WITH the certificate object — triggers the modal
             return render(request, 'certificates/issue_certificate.html', {
                 'form': CertificateForm(),
                 'success': True,
@@ -46,9 +54,7 @@ def issue_certificate(request):
     else:
         form = CertificateForm()
 
-    return render(request, 'certificates/issue_certificate.html', {
-        'form': form
-    })
+    return render(request, 'certificates/issue_certificate.html', {'form': form})
 
 
 def verify_certificate(request):

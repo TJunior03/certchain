@@ -9,6 +9,7 @@ class Certificate(models.Model):
     course_name      = models.CharField(max_length=255)
     issue_date       = models.DateField()
     certificate_hash = models.CharField(max_length=64, unique=True)
+    pdf_file         = models.FileField(upload_to='certificates/', null=True, blank=True)
     issuer           = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at       = models.DateTimeField(auto_now_add=True)
 
