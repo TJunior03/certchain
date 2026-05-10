@@ -1,4 +1,5 @@
 import hashlib
+import PyPDF2
 
 
 def generate_certificate_hash(student_name, course_name, issue_date):
