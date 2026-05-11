@@ -1,0 +1,52 @@
+
+services:
+
+  db:
+    image: postgres:17
+    container_name: certchain_db
+    environment:
+      POSTGRES_DB:       certchain_db
+      POSTGRES_USER:     certchain_user
+      POSTGRES_PASSWORD: certchain1234
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - certchain_network
+
+  web:
+    build: .
+    container_name: certchain_web
+    command: gunicorn certchain.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - certchain_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: certchain_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - static_volume:/app/static
+      - media_volume:/app/media
+    depends_on:
+      - web
+    networks:
+      - certchain_network
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+
+networks:
+  certchain_network:
+    driver: bridge
