@@ -5,3 +5,4 @@ djangorestframework
 pypdf2
 gunicorn
 web3
+py-solc-x
