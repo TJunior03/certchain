@@ -4,3 +4,4 @@ python-decouple
 djangorestframework
 pypdf2
 gunicorn
+web3

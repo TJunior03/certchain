@@ -50,3 +50,15 @@ volumes:
 networks:
   certchain_network:
     driver: bridge
+
+ganache:
+    image: trufflesuite/ganache:latest
+    container_name: certchain_ganache
+    ports:
+      - "8545:8545"
+    command: >
+      --deterministic
+      --accounts 10
+      --host 0.0.0.0
+    networks:
+      - certchain_network
