@@ -1,4 +1,3 @@
-
 services:
 
   db:
@@ -25,6 +24,7 @@ services:
       - .env
     depends_on:
       - db
+      - ganache
     networks:
       - certchain_network
 
@@ -42,16 +42,7 @@ services:
     networks:
       - certchain_network
 
-volumes:
-  postgres_data:
-  static_volume:
-  media_volume:
-
-networks:
-  certchain_network:
-    driver: bridge
-
-ganache:
+  ganache:
     image: trufflesuite/ganache:latest
     container_name: certchain_ganache
     ports:
@@ -62,3 +53,12 @@ ganache:
       --host 0.0.0.0
     networks:
       - certchain_network
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+
+networks:
+  certchain_network:
+    driver: bridge

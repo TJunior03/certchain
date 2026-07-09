@@ -23,6 +23,32 @@
             </div>
         {% endif %}
         <a href="/verify/" class="btn-link">Verify Another</a>
+    
+        {% if blockchain_info %}
+    <div style="margin-top:20px; padding:16px;
+                background:#0a0f1e; border:1px solid #4a148c;
+                border-radius:8px;">
+        <p style="color:#ce93d8; font-size:13px; font-weight:600; margin-bottom:12px;">
+            ⛓ BLOCKCHAIN RECORD
+        </p>
+        <p style="color:#b0bec5; font-size:13px;">
+            Network: <strong style="color:#fff;">{{ blockchain_info.blockchain }}</strong>
+        </p>
+        <p style="color:#b0bec5; font-size:13px; margin-top:6px;">
+            Anchored at: <strong style="color:#fff;">{{ blockchain_info.timestamp }}</strong>
+        </p>
+        <p style="color:#b0bec5; font-size:13px; margin-top:6px;">
+            Transaction Hash:
+        </p>
+        <div style="background:#0d1b2a; border:1px solid #4a148c;
+                    border-radius:6px; padding:10px; margin-top:4px;
+                    font-family:monospace; font-size:11px;
+                    color:#ce93d8; word-break:break-all;">
+            {{ blockchain_info.tx_hash }}
+        </div>
+    </div>
+    {% endif %}
+
     {% else %}
         <form method="POST">
             {% csrf_token %}

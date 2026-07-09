@@ -2,6 +2,7 @@ from django.shortcuts import render
 from .forms import CertificateForm
 from .models import Certificate
 from .utils import generate_certificate_hash, generate_pdf_hash, verify_certificate_hash
+from .blockchain import store_hash_on_blockchain
 
 
 def home(request):
@@ -15,7 +16,7 @@ def issue_certificate(request):
         if form.is_valid():
             certificate = form.save(commit=False)
 
-            # Generate hash — from PDF if uploaded, otherwise from text fields
+            # Generate hash from PDF or text fields
             if request.FILES.get('pdf_file'):
                 cert_hash = generate_pdf_hash(request.FILES['pdf_file'])
             else:
@@ -39,10 +40,14 @@ def issue_certificate(request):
 
             certificate.save()
 
+            # Store hash on blockchain
+            tx_hash = store_hash_on_blockchain(cert_hash)
+
             return render(request, 'certificates/issue_certificate.html', {
                 'form': CertificateForm(),
                 'success': True,
-                'certificate': certificate
+                'certificate': certificate,
+                'tx_hash': tx_hash
             })
 
         else:
@@ -60,6 +65,7 @@ def issue_certificate(request):
 def verify_certificate(request):
     result = None
     certificate = None
+    blockchain_info = None
 
     if request.method == 'POST':
         certificate_id = request.POST.get('certificate_id', '').strip()
@@ -67,10 +73,25 @@ def verify_certificate(request):
         try:
             certificate = Certificate.objects.get(certificate_id=certificate_id)
             result = True
+
+            # Check blockchain record
+            from .models import TransactionLog
+            tx_log = TransactionLog.objects.filter(
+                certificate_hash=certificate.certificate_hash
+            ).first()
+
+            if tx_log:
+                blockchain_info = {
+                    'tx_hash'  : tx_log.tx_hash,
+                    'blockchain': tx_log.blockchain,
+                    'timestamp': tx_log.timestamp
+                }
+
         except Certificate.DoesNotExist:
             result = False
 
     return render(request, 'certificates/verify_certificate.html', {
-        'result': result,
-        'certificate': certificate
+        'result'         : result,
+        'certificate'    : certificate,
+        'blockchain_info': blockchain_info
     })
