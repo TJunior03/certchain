@@ -1,31 +1,40 @@
 from web3 import Web3
 from solcx import compile_source, install_solc
 from .contract import CONTRACT_SOURCE
-from .models import TransactionLog
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Ganache local blockchain URL
 GANACHE_URL = "http://ganache:8545"
+
+# Store contract address in memory for this session
+_contract_address = None
+_contract_abi = None
 
 
 def get_web3():
-    """Connect to local Ganache blockchain."""
     w3 = Web3(Web3.HTTPProvider(GANACHE_URL))
     if not w3.is_connected():
         raise ConnectionError("Cannot connect to Ganache blockchain.")
     return w3
 
 
-def deploy_contract():
+def get_contract():
     """
-    Compile and deploy the CertChain smart contract to Ganache.
-    Returns the deployed contract instance.
+    Deploy contract once and reuse the same instance.
     """
+    global _contract_address, _contract_abi
+
     w3 = get_web3()
 
-    # Install and use Solidity compiler
+    if _contract_address and _contract_abi:
+        # Reuse existing contract
+        return w3.eth.contract(
+            address=_contract_address,
+            abi=_contract_abi
+        ), w3
+
+    # First time — compile and deploy
     install_solc("0.8.0")
     compiled = compile_source(
         CONTRACT_SOURCE,
@@ -33,57 +42,50 @@ def deploy_contract():
         solc_version="0.8.0"
     )
 
-    # Get contract interface
-    contract_id   = "<stdin>:CertChain"
+    contract_id        = "<stdin>:CertChain"
     contract_interface = compiled[contract_id]
+    _contract_abi      = contract_interface["abi"]
 
-    # Use first Ganache account as deployer
     deployer = w3.eth.accounts[0]
     w3.eth.default_account = deployer
 
-    # Deploy contract
     Contract = w3.eth.contract(
-        abi=contract_interface["abi"],
+        abi=_contract_abi,
         bytecode=contract_interface["bin"]
     )
 
     tx_hash    = Contract.constructor().transact()
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
-    logger.info(f"Contract deployed at: {tx_receipt.contractAddress}")
+    _contract_address = tx_receipt.contractAddress
+    logger.info(f"Contract deployed at: {_contract_address}")
 
     return w3.eth.contract(
-        address=tx_receipt.contractAddress,
-        abi=contract_interface["abi"]
-    ), tx_receipt.contractAddress
+        address=_contract_address,
+        abi=_contract_abi
+    ), w3
 
 
 def store_hash_on_blockchain(certificate_hash):
     """
-    Store a certificate hash on the Ethereum blockchain.
-    Returns the transaction hash as proof.
+    Store a certificate hash on the blockchain.
     """
     try:
-        w3       = get_web3()
-        contract, _ = deploy_contract()
+        from .models import TransactionLog
 
-        # Use first Ganache account
+        contract, w3 = get_contract()
         account = w3.eth.accounts[0]
         w3.eth.default_account = account
 
-        # Send transaction to blockchain
         tx_hash = contract.functions.storeCertificate(
             certificate_hash
         ).transact()
 
-        # Wait for confirmation
-        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-
+        receipt     = w3.eth.wait_for_transaction_receipt(tx_hash)
         tx_hash_hex = receipt.transactionHash.hex()
 
         logger.info(f"Hash stored on blockchain: {tx_hash_hex}")
 
-        # Save to TransactionLog
         TransactionLog.objects.create(
             certificate_hash=certificate_hash,
             tx_hash=tx_hash_hex,
@@ -100,11 +102,9 @@ def store_hash_on_blockchain(certificate_hash):
 def verify_hash_on_blockchain(certificate_hash):
     """
     Verify a certificate hash exists on the blockchain.
-    Returns exists, timestamp, issuer address.
     """
     try:
-        w3 = get_web3()
-        contract, _ = deploy_contract()
+        contract, w3 = get_contract()
 
         result = contract.functions.verifyCertificate(
             certificate_hash
