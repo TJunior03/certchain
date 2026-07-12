@@ -5,7 +5,7 @@ from .models import Certificate
 class CertificateForm(forms.ModelForm):
     class Meta:
         model  = Certificate
-        fields = ['student_name', 'course_name', 'issue_date', 'pdf_file']
+        fields = ['student_name', 'student_email', 'course_name', 'issue_date', 'pdf_file']
         widgets = {
             'pdf_file': forms.FileInput(attrs={'accept': '.pdf'})
         }

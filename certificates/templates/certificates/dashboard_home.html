@@ -1,0 +1,71 @@
+{% extends 'certificates/dashboard_base.html' %}
+{% block page_title %}Overview{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <p class="stat-label">Total Certificates</p>
+        <p class="stat-value">{{ total_certificates }}</p>
+        <p class="stat-sub">All time</p>
+    </div>
+    <div class="stat-card">
+        <p class="stat-label">Blockchain Anchored</p>
+        <p class="stat-value" style="color:#ce93d8;">{{ blockchain_anchored }}</p>
+        <p class="stat-sub">With tx_hash</p>
+    </div>
+    <div class="stat-card">
+        <p class="stat-label">Not Anchored</p>
+        <p class="stat-value" style="color:#ff9800;">{{ not_anchored }}</p>
+        <p class="stat-sub">DB only</p>
+    </div>
+    <div class="stat-card">
+        <p class="stat-label">Issued By You</p>
+        <p class="stat-value" style="color:#4caf50;">{{ issued_by_me }}</p>
+        <p class="stat-sub">Your certificates</p>
+    </div>
+</div>
+
+<!-- Recent certificates -->
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <p class="card-title" style="margin-bottom:0;">Recent Certificates</p>
+        <a href="/dashboard/certificates/" class="btn btn-primary">View All</a>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Course</th>
+                <th>Issue Date</th>
+                <th>Blockchain</th>
+                <th>Issued By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cert in recent_certificates %}
+            <tr>
+                <td style="color:#e0e6f0;">{{ cert.student_name }}</td>
+                <td>{{ cert.course_name }}</td>
+                <td>{{ cert.issue_date }}</td>
+                <td>
+                    {% if cert.blockchain_anchored %}
+                        <span class="badge badge-blockchain">⛓ Anchored</span>
+                    {% else %}
+                        <span class="badge badge-warning">DB Only</span>
+                    {% endif %}
+                </td>
+                <td>{{ cert.issuer }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align:center; color:#546e7a;">
+                    No certificates issued yet.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

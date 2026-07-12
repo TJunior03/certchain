@@ -1,0 +1,121 @@
+{% extends 'certificates/dashboard_base.html' %}
+{% block title %}Issue Certificate{% endblock %}
+{% block page_title %}Issue Certificate{% endblock %}
+{% block nav_issue %}active{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px;">
+    <p class="card-title">➕ Issue New Certificate</p>
+
+    {% if error %}
+    <div style="padding:14px; background:#7f000040; border:1px solid #ef5350;
+                border-radius:8px; margin-bottom:20px; color:#ef9a9a;">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    {% if success %}
+    <div style="padding:20px; background:#1b5e2040; border:1px solid #4caf50;
+                border-radius:8px; margin-bottom:20px;">
+        <p style="color:#4caf50; font-weight:600; margin-bottom:12px;">
+            ✅ Certificate Issued Successfully!
+        </p>
+        <p style="color:#b0bec5; font-size:13px;">Student: <strong style="color:#fff;">{{ certificate.student_name }}</strong></p>
+        <p style="color:#b0bec5; font-size:13px;">Course: <strong style="color:#fff;">{{ certificate.course_name }}</strong></p>
+        <p style="color:#b0bec5; font-size:13px; margin-top:8px;">Certificate ID:</p>
+        <div style="background:#0a0f1e; border:1px solid #1565c0; border-radius:6px;
+                    padding:10px; font-family:monospace; font-size:12px;
+                    color:#4fc3f7; word-break:break-all; margin-top:4px;">
+            {{ certificate.certificate_id }}
+        </div>
+        <p style="color:#b0bec5; font-size:13px; margin-top:12px;">SHA-256 Hash:</p>
+        <div style="background:#0a0f1e; border:1px solid #1565c0; border-radius:6px;
+                    padding:10px; font-family:monospace; font-size:12px;
+                    color:#4fc3f7; word-break:break-all; margin-top:4px;">
+            {{ certificate.certificate_hash }}
+        </div>
+        {% if tx_hash %}
+        <p style="color:#b0bec5; font-size:13px; margin-top:12px;">⛓ Blockchain TX Hash:</p>
+        <div style="background:#0a0f1e; border:1px solid #4a148c; border-radius:6px;
+                    padding:10px; font-family:monospace; font-size:12px;
+                    color:#ce93d8; word-break:break-all; margin-top:4px;">
+            {{ tx_hash }}
+        </div>
+        {% endif %}
+        {% if email_sent %}
+        <p style="color:#4caf50; font-size:13px; margin-top:12px;">
+            ✅ Certificate credentials sent to {{ certificate.student_email }}
+        </p>
+        {% elif certificate.student_email %}
+        <p style="color:#ff9800; font-size:13px; margin-top:12px;">
+            ⚠ Email could not be sent to {{ certificate.student_email }}
+        </p>
+        {% else %}
+        <p style="color:#546e7a; font-size:13px; margin-top:12px;">
+            ℹ No student email provided — credentials not sent.
+        </p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div style="margin-bottom:16px;">
+            <label style="display:block; color:#90caf9; font-size:13px;
+                          margin-bottom:6px; font-weight:600;">Student Name</label>
+            <input type="text" name="student_name"
+                   style="width:100%; padding:12px; background:#0a0f1e;
+                          border:1px solid #1565c0; border-radius:8px;
+                          color:#e0e6f0; font-size:14px; outline:none;"
+                   placeholder="e.g. John Doe" required>
+        </div>
+        <div style="margin-bottom:16px;">
+            <label style="display:block; color:#90caf9; font-size:13px;
+                        margin-bottom:6px; font-weight:600;">
+                Student Email (optional)
+            </label>
+            <input type="email" name="student_email"
+                style="width:100%; padding:12px; background:#0a0f1e;
+                        border:1px solid #1565c0; border-radius:8px;
+                        color:#e0e6f0; font-size:14px; outline:none;"
+                placeholder="e.g. student@university.com">
+        </div>
+        <div style="margin-bottom:16px;">
+            <label style="display:block; color:#90caf9; font-size:13px;
+                          margin-bottom:6px; font-weight:600;">Course Name</label>
+            <input type="text" name="course_name"
+                   style="width:100%; padding:12px; background:#0a0f1e;
+                          border:1px solid #1565c0; border-radius:8px;
+                          color:#e0e6f0; font-size:14px; outline:none;"
+                   placeholder="e.g. Cloud Engineering" required>
+        </div>
+        <div style="margin-bottom:16px;">
+            <label style="display:block; color:#90caf9; font-size:13px;
+                          margin-bottom:6px; font-weight:600;">Issue Date</label>
+            <input type="date" name="issue_date"
+                   style="width:100%; padding:12px; background:#0a0f1e;
+                          border:1px solid #1565c0; border-radius:8px;
+                          color:#e0e6f0; font-size:14px; outline:none;" required>
+        </div>
+        <div style="margin-bottom:20px;">
+            <label style="display:block; color:#90caf9; font-size:13px;
+                          margin-bottom:6px; font-weight:600;">
+                Upload PDF (optional)
+            </label>
+            <input type="file" name="pdf_file" accept=".pdf"
+                   style="width:100%; padding:12px; background:#0a0f1e;
+                          border:1px solid #1565c0; border-radius:8px;
+                          color:#e0e6f0; font-size:14px; cursor:pointer;">
+            <p style="color:#546e7a; font-size:12px; margin-top:4px;">
+                If uploaded, hash is generated from PDF content.
+            </p>
+        </div>
+        <button type="submit"
+                style="width:100%; padding:14px; background:#1565c0;
+                       border:none; border-radius:8px; color:white;
+                       font-size:15px; font-weight:600; cursor:pointer;">
+            Generate & Issue Certificate
+        </button>
+    </form>
+</div>
+{% endblock %}

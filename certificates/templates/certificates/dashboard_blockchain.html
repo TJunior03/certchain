@@ -1,0 +1,47 @@
+{% extends 'certificates/dashboard_base.html' %}
+{% block page_title %}Blockchain Logs{% endblock %}
+{% block nav_blockchain %}active{% endblock %}
+
+{% block content %}
+<div class="card">
+    <p class="card-title">⛓ Blockchain Transaction Logs ({{ logs|length }})</p>
+    <p style="color:#546e7a; font-size:13px; margin-bottom:20px;">
+        Every entry below is permanently recorded on the Ethereum blockchain.
+        These records cannot be deleted or modified.
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <th>Certificate Hash</th>
+                <th>Transaction Hash</th>
+                <th>Network</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>
+                    <span class="hash-short">{{ log.certificate_hash|slice:":16" }}...</span>
+                </td>
+                <td>
+                    <span class="hash-short" style="color:#ce93d8;">
+                        {{ log.tx_hash|slice:":16" }}...
+                    </span>
+                </td>
+                <td>
+                    <span class="badge badge-blockchain">{{ log.blockchain }}</span>
+                </td>
+                <td style="color:#546e7a;">{{ log.timestamp }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align:center; color:#546e7a;">
+                    No blockchain records yet.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

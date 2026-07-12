@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 class Certificate(models.Model):
     certificate_id   = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     student_name     = models.CharField(max_length=255)
+    student_email    = models.EmailField(null=True, blank=True)
     course_name      = models.CharField(max_length=255)
     issue_date       = models.DateField()
     certificate_hash = models.CharField(max_length=64, unique=True)

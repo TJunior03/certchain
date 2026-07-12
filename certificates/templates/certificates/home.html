@@ -1,17 +1,147 @@
-{% extends 'certificates/base.html' %}
-{% block title %}Home{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CertChain — Certificate Verification System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-{% block content %}
-<div class="card">
-    <h1>Welcome to CertChain</h1>
-    <h2>Tamper-Proof Certificate Verification</h2>
-    <p>
-        CertChain uses SHA-256 cryptographic hashing to issue and verify
-        digital certificates. Any tampering with certificate data is instantly
-        detected. Built on Django, PostgreSQL, Docker, and AWS.
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0a0f1e;
+            color: #e0e6f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 40px 24px;
+            max-width: 700px;
+        }
+
+        .logo {
+            font-size: 48px;
+            font-weight: 800;
+            color: #4fc3f7;
+            letter-spacing: 4px;
+            margin-bottom: 8px;
+        }
+
+        .tagline {
+            font-size: 18px;
+            color: #546e7a;
+            margin-bottom: 16px;
+        }
+
+        .description {
+            font-size: 15px;
+            color: #90a4ae;
+            line-height: 1.8;
+            margin-bottom: 48px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 700px;
+            padding: 0 24px;
+        }
+
+        .card {
+            background: #0d1b2a;
+            border: 1px solid #1565c020;
+            border-radius: 16px;
+            padding: 32px 24px;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            border-color: #1565c0;
+            transform: translateY(-4px);
+            background: #0d1b2a;
+        }
+
+        .card-icon { font-size: 40px; margin-bottom: 16px; }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #4fc3f7;
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            font-size: 13px;
+            color: #546e7a;
+            line-height: 1.6;
+        }
+
+        .card-public  { border-color: #1565c040; }
+        .card-staff   { border-color: #4a148c40; }
+        .card-admin   { border-color: #1b5e2040; }
+
+        .card-public:hover  { border-color: #1565c0; }
+        .card-staff:hover   { border-color: #9c27b0; }
+        .card-admin:hover   { border-color: #4caf50; }
+
+        .footer {
+            margin-top: 48px;
+            font-size: 12px;
+            color: #263238;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="logo">⛓ CERTCHAIN</div>
+        <p class="tagline">Tamper-Proof Certificate Verification</p>
+        <p class="description">
+            CertChain uses SHA-256 cryptographic hashing and Ethereum blockchain
+            anchoring to issue and verify digital certificates. Any tampering is
+            instantly detected. Built on Django, PostgreSQL, Docker, and Web3.
+        </p>
+    </div>
+
+    <div class="cards">
+        <a href="/verify/" class="card card-public">
+            <div class="card-icon">🔍</div>
+            <p class="card-title">Verify Certificate</p>
+            <p class="card-desc">
+                Check if a certificate is authentic using its Certificate ID.
+                No login required.
+            </p>
+        </a>
+
+        <a href="/dashboard/" class="card card-staff">
+            <div class="card-icon">🎓</div>
+            <p class="card-title">Staff Dashboard</p>
+            <p class="card-desc">
+                Issue certificates, view blockchain records, and manage the
+                system. Login required.
+            </p>
+        </a>
+
+        <a href="/admin/" class="card card-admin">
+            <div class="card-icon">⚙</div>
+            <p class="card-title">Admin Panel</p>
+            <p class="card-desc">
+                Full system administration. Superuser access only.
+            </p>
+        </a>
+    </div>
+
+    <p class="footer">
+        CertChain © 2026 — Secured by SHA-256 + Ethereum Blockchain
     </p>
-    <br>
-    <a href="{% url 'issue_certificate' %}" class="btn-link">Issue a Certificate</a>
-    <a href="{% url 'verify_certificate' %}" class="btn-link" style="margin-left: 12px;">Verify a Certificate</a>
-</div>
-{% endblock %}
+</body>
+</html>

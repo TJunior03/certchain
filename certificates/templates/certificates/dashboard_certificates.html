@@ -1,0 +1,62 @@
+{% extends 'certificates/dashboard_base.html' %}
+{% block page_title %}Certificates{% endblock %}
+{% block nav_certs %}active{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <p class="card-title" style="margin-bottom:0;">
+            All Certificates ({{ certificates|length }})
+        </p>
+        <a href="/dashboard/issue/" class="btn btn-primary">➕ Issue New</a>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Course</th>
+                <th>Issue Date</th>
+                <th>Certificate ID</th>
+                <th>Hash</th>
+                <th>Blockchain</th>
+                <th>Issuer</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cert in certificates %}
+            <tr>
+                <td style="color:#e0e6f0; font-weight:600;">
+                    {{ cert.student_name }}
+                </td>
+                <td>{{ cert.course_name }}</td>
+                <td>{{ cert.issue_date }}</td>
+                <td>
+                    <span class="hash-short">
+                        {{ cert.certificate_id|stringformat:"s"|slice:":8" }}...
+                    </span>
+                </td>
+                <td>
+                    <span class="hash-short">
+                        {{ cert.certificate_hash|slice:":12" }}...
+                    </span>
+                </td>
+                <td>
+                    {% if cert.blockchain_anchored %}
+                        <span class="badge badge-blockchain">⛓ Anchored</span>
+                    {% else %}
+                        <span class="badge badge-warning">DB Only</span>
+                    {% endif %}
+                </td>
+                <td>{{ cert.issuer }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align:center; color:#546e7a;">
+                    No certificates found.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
