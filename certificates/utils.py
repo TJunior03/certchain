@@ -24,65 +24,55 @@ def verify_certificate_hash(student_name, course_name, issue_date, stored_hash):
 
 
 def send_certificate_email(certificate, tx_hash):
-    """
-    Send certificate credentials to the student via email.
-    """
     if not certificate.student_email:
         return False
 
-    subject = f"Your Certificate — {certificate.course_name}"
+    subject = f"Your Certificate - {certificate.course_name}"
 
     message = f"""
 Dear {certificate.student_name},
 
-Congratulations! Your certificate has been officially issued
-and permanently recorded on the Ethereum blockchain.
+Congratulations! Your certificate has been issued and recorded on the blockchain.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CERTIFICATE DETAILS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Student  : {certificate.student_name}
 Course   : {certificate.course_name}
 Date     : {certificate.issue_date}
 Issued by: {certificate.issuer}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 YOUR VERIFICATION CREDENTIALS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Certificate ID:
 {certificate.certificate_id}
 
 SHA-256 Hash:
 {certificate.certificate_hash}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BLOCKCHAIN RECORD
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Transaction Hash:
 {tx_hash}
-Network: Ethereum (Ganache Local)
+Network: Ethereum
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+To verify your certificate visit:
+http://13.204.65.237/verify/
 
-To verify your certificate, visit:
-http://localhost/verify/
+Enter your Certificate ID to verify authenticity.
 
-Enter your Certificate ID to instantly verify authenticity.
+Keep this email safe.
 
-Keep this email safe — it contains your permanent
-blockchain proof of certification.
-
-— CertChain Certification System
+CertChain Certification System
     """
 
     try:
+        from django.core.mail import send_mail
+        from django.conf import settings
         send_mail(
             subject,
             message,
-            settings.DEFAULT_FROM_EMAIL,
+            settings.EMAIL_HOST_USER,
             [certificate.student_email],
             fail_silently=False
         )
         return True
     except Exception as e:
+        print(f"EMAIL ERROR: {str(e)}")
         return False
