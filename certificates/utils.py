@@ -2,6 +2,7 @@ import hashlib
 import PyPDF2
 from django.core.mail import send_mail
 from django.conf import settings
+from django.utils import timezone
 
 
 def generate_certificate_hash(student_name, course_name, issue_date):
@@ -27,52 +28,77 @@ def send_certificate_email(certificate, tx_hash):
     if not certificate.student_email:
         return False
 
-    subject = f"Your Certificate - {certificate.course_name}"
+    verification_url = f"http://13.204.65.237/verify/{certificate.certificate_id}/"
+    verification_timestamp = timezone.now().strftime('%d %b %Y, %H:%M %Z')
 
-    message = f"""
+    subject = (
+        f"CertChain Blockchain Verification Receipt - {certificate.course_name}"
+    )
+
+    tx_hash_display = tx_hash if tx_hash and tx_hash != 'Blockchain unavailable' else 'Not available'
+
+    body = f"""
 Dear {certificate.student_name},
 
-Congratulations! Your certificate has been issued and recorded on the blockchain.
+Your academic credential has been authenticated by the issuing institution.
 
-CERTIFICATE DETAILS
-Student  : {certificate.student_name}
-Course   : {certificate.course_name}
-Date     : {certificate.issue_date}
-Issued by: {certificate.issuer}
+CertChain has generated a SHA-256 fingerprint for the referenced credential and permanently stored it on the Ethereum blockchain.
 
-YOUR VERIFICATION CREDENTIALS
-Certificate ID:
-{certificate.certificate_id}
+Attached to this email is your official Blockchain Verification Receipt. This receipt confirms the credential authenticity status and blockchain verification record.
 
-SHA-256 Hash:
-{certificate.certificate_hash}
+--------------------------------------------------
+VERIFICATION SUMMARY
+--------------------------------------------------
+Verification Status : AUTHENTIC ✓
+Certificate ID      : {certificate.certificate_id}
+Verification System : CertChain
+Blockchain Network  : Ethereum
+Verification Timestamp : {verification_timestamp}
+Transaction Hash    : {tx_hash_display}
 
-BLOCKCHAIN RECORD
-Transaction Hash:
-{tx_hash}
-Network: Ethereum
+Verification URL:
+{verification_url}
 
-To verify your certificate visit:
-http://13.204.65.237/verify/
+Please retain this Blockchain Verification Receipt for your records. It may be shared with employers, universities, or other organizations that need independent proof of credential authenticity.
 
-Enter your Certificate ID to verify authenticity.
+Note:
+This receipt confirms the authenticity of the referenced academic credential. It does not replace the original certificate issued by the institution.
 
-Keep this email safe.
+Thank you for using CertChain.
 
-CertChain Certification System
-    """
+--------------------------------------------------
+CertChain
+Blockchain-Based Academic Credential Verification System
+--------------------------------------------------
+"""
 
     try:
-        from django.core.mail import send_mail
+        from django.core.mail import EmailMessage
         from django.conf import settings
-        send_mail(
-            subject,
-            message,
-            settings.EMAIL_HOST_USER,
-            [certificate.student_email],
-            fail_silently=False
+        from .pdf_generator import generate_certificate_pdf
+
+        # Generate Blockchain Verification Receipt
+        pdf_buffer = generate_certificate_pdf(certificate, tx_hash)
+
+        email = EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=settings.EMAIL_HOST_USER,
+            to=[certificate.student_email],
         )
+
+        # Attach Verification Receipt
+        email.attach(
+            f"certchain_blockchain_verification_receipt_{certificate.certificate_id}.pdf",
+            pdf_buffer.read(),
+            "application/pdf",
+        )
+
+        email.send(fail_silently=False)
         return True
+
     except Exception as e:
         print(f"EMAIL ERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return False
