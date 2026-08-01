@@ -16,6 +16,21 @@
         <p class="stat-sub">With tx_hash</p>
     </div>
     <div class="stat-card">
+        <p class="stat-label">Pending Approval</p>
+        <p class="stat-value" style="color:#fbbf24;">{{ pending_count }}</p>
+        <p class="stat-sub">Awaiting review</p>
+    </div>
+    <div class="stat-card">
+        <p class="stat-label">Approved</p>
+        <p class="stat-value" style="color:#4caf50;">{{ approved_count }}</p>
+        <p class="stat-sub">Verification complete</p>
+    </div>
+    <div class="stat-card">
+        <p class="stat-label">Rejected</p>
+        <p class="stat-value" style="color:#f87171;">{{ rejected_count }}</p>
+        <p class="stat-sub">Not accepted</p>
+    </div>
+    <div class="stat-card">
         <p class="stat-label">Not Anchored</p>
         <p class="stat-value" style="color:#ff9800;">{{ not_anchored }}</p>
         <p class="stat-sub">DB only</p>
@@ -38,6 +53,7 @@
             <tr>
                 <th>Student</th>
                 <th>Course</th>
+                <th>Status</th>
                 <th>Issue Date</th>
                 <th>Blockchain</th>
                 <th>Issued By</th>
@@ -48,6 +64,15 @@
             <tr>
                 <td style="color:#e0e6f0;">{{ cert.student_name }}</td>
                 <td>{{ cert.course_name }}</td>
+                <td>
+                    {% if cert.status == 'approved' %}
+                        <span class="badge badge-approved">Approved</span>
+                    {% elif cert.status == 'rejected' %}
+                        <span class="badge badge-rejected">Rejected</span>
+                    {% else %}
+                        <span class="badge badge-pending">Pending</span>
+                    {% endif %}
+                </td>
                 <td>{{ cert.issue_date }}</td>
                 <td>
                     {% if cert.blockchain_anchored %}
@@ -60,7 +85,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" style="text-align:center; color:#546e7a;">
+                <td colspan="6" style="text-align:center; color:#546e7a;">
                     No certificates issued yet.
                 </td>
             </tr>

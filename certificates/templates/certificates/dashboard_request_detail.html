@@ -1,0 +1,222 @@
+{% extends 'certificates/dashboard_base.html' %}
+{% block title %}Request Detail{% endblock %}
+{% block page_title %}Verification Request — {{ cert.verification_id }}{% endblock %}
+{% block nav_requests %}active{% endblock %}
+
+{% block content %}
+
+{% if success %}
+<div style="padding:16px; background:#1b5e2040; border:1px solid #4caf50;
+            border-radius:8px; margin-bottom:24px; color:#a5d6a7; font-weight:600;">
+    ✅ {{ success }}
+</div>
+{% endif %}
+
+{% if error %}
+<div style="padding:16px; background:#7f000040; border:1px solid #ef5350;
+            border-radius:8px; margin-bottom:24px; color:#ef9a9a;">
+    ❌ {{ error }}
+</div>
+{% endif %}
+
+<!-- Status badge -->
+<div class="card" style="margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <p style="color:#546e7a; font-size:12px; margin-bottom:4px;">VERIFICATION ID</p>
+            <p style="color:#4fc3f7; font-size:20px; font-weight:700; font-family:monospace;">
+                {{ cert.verification_id }}
+            </p>
+        </div>
+        <div style="text-align:right;">
+            {% if cert.is_pending %}
+                <span class="badge badge-warning" style="font-size:14px; padding:8px 16px;">
+                    ⏳ Pending Review
+                </span>
+            {% elif cert.is_staff_approved %}
+                <span class="badge badge-blockchain" style="font-size:14px; padding:8px 16px;">
+                    📋 Awaiting Admin Approval
+                </span>
+            {% elif cert.is_verified %}
+                <span class="badge badge-success" style="font-size:14px; padding:8px 16px;">
+                    ✅ Verified
+                </span>
+            {% elif cert.is_rejected %}
+                <span style="background:#7f000040; color:#ef9a9a; border:1px solid #ef535040;
+                             padding:8px 16px; border-radius:20px; font-size:14px; font-weight:600;">
+                    ❌ Rejected
+                </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Credential details -->
+<div class="card">
+    <p class="card-title">📄 Credential Details</p>
+    <table>
+        <tr>
+            <td style="color:#546e7a; width:200px;">Certificate Holder</td>
+            <td style="color:#e0e6f0; font-weight:600;">{{ cert.student_name }}</td>
+        </tr>
+        <tr>
+            <td style="color:#546e7a;">Student Email</td>
+            <td>{{ cert.student_email|default:"Not provided" }}</td>
+        </tr>
+        <tr>
+            <td style="color:#546e7a;">Certificate Type</td>
+            <td>{{ cert.course_name }}</td>
+        </tr>
+        <tr>
+            <td style="color:#546e7a;">Original Institution</td>
+            <td>{{ cert.original_issuer }}</td>
+        </tr>
+        <tr>
+            <td style="color:#546e7a;">Original Issue Date</td>
+            <td>{{ cert.issue_date }}</td>
+        </tr>
+        <tr>
+            <td style="color:#546e7a;">Submitted By</td>
+            <td>{{ cert.issuer }}</td>
+        </tr>
+        <tr>
+            <td style="color:#546e7a;">Submitted At</td>
+            <td>{{ cert.created_at|date:"M d, Y H:i" }}</td>
+        </tr>
+        {% if cert.pdf_file %}
+        <tr>
+            <td style="color:#546e7a;">Supporting Document</td>
+            <td>
+                <a href="{{ cert.pdf_file.url }}" target="_blank"
+                   style="color:#4fc3f7;">View Original Certificate PDF</a>
+            </td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+<!-- Blockchain info if verified -->
+{% if cert.is_verified and tx_log %}
+<div class="card">
+    <p class="card-title" style="color:#ce93d8;">⛓ Blockchain Record</p>
+    <table>
+        <tr>
+            <td style="color:#546e7a; width:200px;">Network</td>
+            <td>{{ tx_log.blockchain }}</td>
+        </tr>
+        <tr>
+            <td style="color:#546e7a;">Certificate Hash</td>
+            <td style="font-family:monospace; font-size:12px; color:#4fc3f7;">
+                {{ cert.certificate_hash }}
+            </td>
+        </tr>
+        <tr>
+            <td style="color:#546e7a;">Transaction Hash</td>
+            <td style="font-family:monospace; font-size:12px; color:#ce93d8;">
+                {{ tx_log.tx_hash }}
+            </td>
+        </tr>
+        <tr>
+            <td style="color:#546e7a;">Anchored At</td>
+            <td>{{ tx_log.timestamp|date:"M d, Y H:i" }}</td>
+        </tr>
+    </table>
+</div>
+{% endif %}
+
+<!-- Action buttons -->
+{% if cert.is_pending %}
+<div class="card">
+    <p class="card-title">🔍 Staff Review Action</p>
+    <p style="color:#b0bec5; margin-bottom:20px; font-size:14px;">
+        Review the credential details above. If authentic, approve for admin review.
+        If fraudulent or incomplete, reject with a reason.
+    </p>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <form method="POST" style="flex:1;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="staff_approve">
+            <button type="submit" style="width:100%; padding:14px; background:#1565c0;
+                    border:none; border-radius:8px; color:white; font-size:15px;
+                    font-weight:600; cursor:pointer;">
+                ✅ Approve — Forward to Admin
+            </button>
+        </form>
+        <form method="POST" style="flex:1;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reject">
+            <div style="margin-bottom:8px;">
+                <textarea name="rejection_reason" rows="2"
+                    placeholder="Reason for rejection..."
+                    style="width:100%; padding:10px; background:#0a0f1e;
+                           border:1px solid #7f0000; border-radius:8px;
+                           color:#e0e6f0; font-size:13px; resize:none;"></textarea>
+            </div>
+            <button type="submit" style="width:100%; padding:14px; background:#7f0000;
+                    border:none; border-radius:8px; color:white; font-size:15px;
+                    font-weight:600; cursor:pointer;">
+                ❌ Reject Request
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if cert.is_staff_approved %}
+<div class="card">
+    <p class="card-title">🔐 Admin Final Approval</p>
+    <p style="color:#b0bec5; margin-bottom:8px; font-size:14px;">
+        Staff approved by: <strong style="color:#4fc3f7;">{{ cert.staff_approver }}</strong>
+        on {{ cert.staff_approved_at|date:"M d, Y H:i" }}
+    </p>
+    <p style="color:#b0bec5; margin-bottom:20px; font-size:14px;">
+        Final approval will anchor this certificate to the Ethereum blockchain
+        and send a Verification Receipt PDF to the student.
+    </p>
+    <div style="display:flex; gap:12px;">
+        <form method="POST" style="flex:1;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="admin_approve">
+            <button type="submit" style="width:100%; padding:14px; background:#4a148c;
+                    border:none; border-radius:8px; color:white; font-size:15px;
+                    font-weight:600; cursor:pointer;">
+                ⛓ Final Approve + Anchor to Blockchain
+            </button>
+        </form>
+        <form method="POST" style="flex:1;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reject">
+            <textarea name="rejection_reason" rows="2"
+                placeholder="Reason for rejection..."
+                style="width:100%; padding:10px; background:#0a0f1e;
+                       border:1px solid #7f0000; border-radius:8px;
+                       color:#e0e6f0; font-size:13px; resize:none;
+                       margin-bottom:8px;"></textarea>
+            <button type="submit" style="width:100%; padding:14px; background:#7f0000;
+                    border:none; border-radius:8px; color:white; font-size:15px;
+                    font-weight:600; cursor:pointer;">
+                ❌ Reject
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if cert.is_rejected %}
+<div class="card" style="border-color:#7f000040;">
+    <p class="card-title" style="color:#ef5350;">❌ Rejection Details</p>
+    <p style="color:#b0bec5; font-size:14px;">
+        Reason: <strong style="color:#ef9a9a;">
+            {{ cert.rejection_reason|default:"No reason provided." }}
+        </strong>
+    </p>
+</div>
+{% endif %}
+
+<div style="margin-top:16px;">
+    <a href="/dashboard/requests/" style="color:#546e7a; font-size:14px; text-decoration:none;">
+        ← Back to All Requests
+    </a>
+</div>
+
+{% endblock %}

@@ -10,8 +10,7 @@ from .serializers import (
     CertificateIssueSerializer,
     VerifyResponseSerializer
 )
-from .utils import generate_certificate_hash, generate_pdf_hash
-from .blockchain import store_hash_on_blockchain, verify_hash_on_blockchain
+from .blockchain import verify_hash_on_blockchain
 
 
 class CertificateIssueAPIView(APIView):
@@ -28,44 +27,15 @@ class CertificateIssueAPIView(APIView):
         serializer = CertificateIssueSerializer(data=request.data)
 
         if serializer.is_valid():
-            student_name = serializer.validated_data['student_name']
-            course_name  = serializer.validated_data['course_name']
-            issue_date   = serializer.validated_data['issue_date']
-            pdf_file     = serializer.validated_data.get('pdf_file', None)
-
-            # Generate hash from PDF or text fields
-            if pdf_file:
-                cert_hash = generate_pdf_hash(pdf_file)
-            else:
-                cert_hash = generate_certificate_hash(
-                    student_name, course_name, str(issue_date)
-                )
-
-            # Check for duplicate
-            if Certificate.objects.filter(certificate_hash=cert_hash).exists():
-                return Response(
-                    {'error': 'This certificate already exists in the system.'},
-                    status=status.HTTP_409_CONFLICT
-                )
-
-            # Save to database
-            certificate = Certificate.objects.create(
-                student_name=student_name,
-                course_name=course_name,
-                issue_date=issue_date,
-                certificate_hash=cert_hash,
-                pdf_file=pdf_file,
-                issuer=request.user
+            certificate = serializer.save(
+                issuer=request.user,
+                status=Certificate.STATUS_PENDING
             )
 
-            # Anchor hash to blockchain
-            tx_hash = store_hash_on_blockchain(cert_hash)
-
-            # Build response
             response_data = CertificateSerializer(certificate).data
-            response_data['tx_hash']    = tx_hash
-            response_data['blockchain'] = 'Ethereum (Ganache Local)'
-            response_data['anchored']   = tx_hash is not None
+            response_data['message'] = (
+                'Verification request submitted. Certificate is pending institutional approval.'
+            )
 
             return Response(response_data, status=status.HTTP_201_CREATED)
 
@@ -93,6 +63,19 @@ class CertificateVerifyAPIView(APIView):
         try:
             certificate = Certificate.objects.get(certificate_id=certificate_id)
 
+            if certificate.status != Certificate.STATUS_VERIFIED:
+                status_message = (
+                    'Certificate exists but is pending institutional approval.'
+                    if certificate.status == Certificate.STATUS_PENDING
+                    else 'Certificate request has been rejected by the institution.'
+                )
+                return Response({
+                    'valid': False,
+                    'message': status_message,
+                    'certificate_id': str(certificate.certificate_id),
+                    'status': certificate.status,
+                }, status=status.HTTP_200_OK)
+
             # Check blockchain record
             tx_log = TransactionLog.objects.filter(
                 certificate_hash=certificate.certificate_hash
@@ -113,6 +96,7 @@ class CertificateVerifyAPIView(APIView):
                 'student_name'     : certificate.student_name,
                 'course_name'      : certificate.course_name,
                 'issue_date'       : str(certificate.issue_date),
+                'status'           : certificate.status,
                 'certificate_hash' : certificate.certificate_hash,
                 'blockchain_record': blockchain_data
             }, status=status.HTTP_200_OK)

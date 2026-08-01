@@ -8,8 +8,10 @@ class CertificateSerializer(serializers.ModelSerializer):
         fields = [
             'certificate_id',
             'student_name',
+            'student_email',
             'course_name',
             'issue_date',
+            'status',
             'certificate_hash',
             'pdf_file',
             'issuer',
@@ -17,6 +19,7 @@ class CertificateSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'certificate_id',
+            'status',
             'certificate_hash',
             'created_at'
         ]
@@ -29,7 +32,7 @@ class CertificateIssueSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model  = Certificate
-        fields = ['student_name', 'course_name', 'issue_date', 'pdf_file']
+        fields = ['student_name', 'student_email', 'course_name', 'issue_date', 'pdf_file']
 
 
 class VerifyResponseSerializer(serializers.Serializer):

@@ -6,8 +6,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     # Public routes
-    path('',        views.home,               name='home'),
-    path('verify/', views.verify_certificate, name='verify_certificate'),
+    path('',                         views.home,               name='home'),
+    path('verify/',                  views.verify_certificate, name='verify_certificate'),
+    path('verify/<uuid:certificate_id>/', views.verify_certificate, name='verify_certificate_detail'),
 
     # Staff Dashboard
     path('dashboard/login/',        auth_views.LoginView.as_view(
@@ -21,6 +22,8 @@ urlpatterns = [
     path('dashboard/certificates/', views.dashboard_certificates, name='dashboard_certificates'),
     path('dashboard/issue/',        views.dashboard_issue,        name='dashboard_issue'),
     path('dashboard/blockchain/',   views.dashboard_blockchain,   name='dashboard_blockchain'),
+    path('dashboard/requests/',                    views.dashboard_requests,       name='dashboard_requests'),
+    path('dashboard/requests/<uuid:certificate_id>/', views.dashboard_request_detail, name='dashboard_request_detail'),
 
     # API routes
     path('api/certificates/', api.CertificateListAPIView.as_view(),  name='api_list'),

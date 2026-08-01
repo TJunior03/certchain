@@ -15,3 +15,8 @@ class VerifyCertificateForm(forms.Form):
     student_name = forms.CharField(max_length=255)
     course_name  = forms.CharField(max_length=255)
     issue_date   = forms.DateField()
+
+
+class CertificateApprovalForm(forms.Form):
+    certificate_id = forms.UUIDField()
+    action = forms.ChoiceField(choices=[('approve', 'Approve'), ('reject', 'Reject')])

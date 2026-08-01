@@ -1,0 +1,139 @@
+{% extends 'certificates/dashboard_base.html' %}
+{% block title %}Verification Requests{% endblock %}
+{% block page_title %}Verification Requests{% endblock %}
+{% block nav_requests %}active{% endblock %}
+
+{% block content %}
+
+<!-- Stats row -->
+<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="stat-card">
+        <p class="stat-label">Pending Review</p>
+        <p class="stat-value" style="color:#ff9800;">{{ pending_count }}</p>
+    </div>
+    <div class="stat-card">
+        <p class="stat-label">Staff Approved</p>
+        <p class="stat-value" style="color:#4fc3f7;">{{ staff_done_count }}</p>
+    </div>
+    <div class="stat-card">
+        <p class="stat-label">Verified</p>
+        <p class="stat-value" style="color:#4caf50;">{{ verified_count }}</p>
+    </div>
+    <div class="stat-card">
+        <p class="stat-label">Rejected</p>
+        <p class="stat-value" style="color:#ef5350;">{{ rejected_count }}</p>
+    </div>
+</div>
+
+<!-- Pending requests -->
+{% if pending %}
+<div class="card">
+    <p class="card-title" style="color:#ff9800;">⏳ Pending Review ({{ pending_count }})</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Verification ID</th>
+                <th>Student</th>
+                <th>Certificate Type</th>
+                <th>Institution</th>
+                <th>Submitted</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cert in pending %}
+            <tr>
+                <td><span class="hash-short">{{ cert.verification_id }}</span></td>
+                <td style="color:#e0e6f0; font-weight:600;">{{ cert.student_name }}</td>
+                <td>{{ cert.course_name }}</td>
+                <td>{{ cert.original_issuer }}</td>
+                <td style="color:#546e7a;">{{ cert.created_at|date:"M d, Y" }}</td>
+                <td>
+                    <a href="/dashboard/requests/{{ cert.certificate_id }}/"
+                       class="btn btn-primary" style="font-size:12px; padding:6px 12px;">
+                        Review
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Staff approved — awaiting admin -->
+{% if staff_done %}
+<div class="card">
+    <p class="card-title" style="color:#4fc3f7;">📋 Awaiting Admin Approval ({{ staff_done_count }})</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Verification ID</th>
+                <th>Student</th>
+                <th>Certificate Type</th>
+                <th>Staff Approver</th>
+                <th>Approved At</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cert in staff_done %}
+            <tr>
+                <td><span class="hash-short">{{ cert.verification_id }}</span></td>
+                <td style="color:#e0e6f0; font-weight:600;">{{ cert.student_name }}</td>
+                <td>{{ cert.course_name }}</td>
+                <td>{{ cert.staff_approver }}</td>
+                <td style="color:#546e7a;">{{ cert.staff_approved_at|date:"M d, Y" }}</td>
+                <td>
+                    <a href="/dashboard/requests/{{ cert.certificate_id }}/"
+                       class="btn btn-primary" style="font-size:12px; padding:6px 12px;">
+                        Final Approve
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Verified -->
+{% if verified %}
+<div class="card">
+    <p class="card-title" style="color:#4caf50;">✅ Verified ({{ verified_count }})</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Verification ID</th>
+                <th>Student</th>
+                <th>Certificate Type</th>
+                <th>Verified At</th>
+                <th>Blockchain</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cert in verified %}
+            <tr>
+                <td><span class="hash-short">{{ cert.verification_id }}</span></td>
+                <td style="color:#e0e6f0;">{{ cert.student_name }}</td>
+                <td>{{ cert.course_name }}</td>
+                <td style="color:#546e7a;">{{ cert.verified_at|date:"M d, Y" }}</td>
+                <td><span class="badge badge-blockchain">⛓ Anchored</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if not pending and not staff_done and not verified %}
+<div class="card" style="text-align:center; padding:60px;">
+    <p style="font-size:48px;">📭</p>
+    <p style="color:#546e7a; margin-top:16px;">No verification requests yet.</p>
+    <a href="/dashboard/issue/" class="btn btn-primary" style="margin-top:16px; display:inline-block;">
+        Submit First Request
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

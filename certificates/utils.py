@@ -4,6 +4,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
 
+from .models import Certificate
+
 
 def generate_certificate_hash(student_name, course_name, issue_date):
     data = f"{student_name}-{course_name}-{issue_date}"
@@ -22,6 +24,56 @@ def generate_pdf_hash(pdf_file):
 def verify_certificate_hash(student_name, course_name, issue_date, stored_hash):
     computed_hash = generate_certificate_hash(student_name, course_name, str(issue_date))
     return computed_hash == stored_hash
+
+
+def approve_certificate_workflow(certificate, acting_user=None):
+    if certificate.status == Certificate.STATUS_VERIFIED and certificate.certificate_hash:
+        return {
+            'success': True,
+            'certificate': certificate,
+            'tx_hash': None,
+            'email_sent': False,
+            'message': 'Certificate is already approved.'
+        }
+
+    if certificate.pdf_file:
+        cert_hash = generate_pdf_hash(certificate.pdf_file)
+    else:
+        cert_hash = generate_certificate_hash(
+            certificate.student_name,
+            certificate.course_name,
+            str(certificate.issue_date)
+        )
+
+    duplicate_exists = Certificate.objects.filter(
+        certificate_hash=cert_hash,
+        status=Certificate.STATUS_VERIFIED
+    ).exclude(pk=certificate.pk).exists()
+
+    if duplicate_exists:
+        return {
+            'success': False,
+            'error': 'An approved certificate with the same SHA-256 hash already exists.'
+        }
+
+    certificate.certificate_hash = cert_hash
+    certificate.status = Certificate.STATUS_VERIFIED
+    if acting_user and not certificate.issuer:
+        certificate.issuer = acting_user
+    certificate.save()
+
+    from .blockchain import store_hash_on_blockchain
+
+    tx_hash = store_hash_on_blockchain(cert_hash)
+    email_sent = send_certificate_email(certificate, tx_hash or 'Blockchain unavailable')
+
+    return {
+        'success': True,
+        'certificate': certificate,
+        'tx_hash': tx_hash,
+        'email_sent': email_sent,
+        'message': 'Certificate approved successfully.'
+    }
 
 
 def send_certificate_email(certificate, tx_hash):

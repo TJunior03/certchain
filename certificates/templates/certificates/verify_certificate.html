@@ -11,6 +11,7 @@
             <div class="alert alert-success">
                 ✅ Certificate is VALID
             </div>
+            <p>Status: <span class="badge badge-approved">Approved</span></p>
             <p>Student: <strong>{{ certificate.student_name }}</strong></p>
             <p>Course: <strong>{{ certificate.course_name }}</strong></p>
             <p>Issue Date: <strong>{{ certificate.issue_date }}</strong></p>
@@ -19,8 +20,18 @@
             <div class="hash-box">{{ certificate.certificate_hash }}</div>
         {% else %}
             <div class="alert alert-error">
-                ❌ Certificate is INVALID — ID not found in the system.
+                ❌ Verification unsuccessful.
             </div>
+            {% if certificate %}
+                {% if certificate.status == 'pending' %}
+                    <p>Status: <span class="badge badge-pending">Pending</span></p>
+                {% elif certificate.status == 'rejected' %}
+                    <p>Status: <span class="badge badge-rejected">Rejected</span></p>
+                {% endif %}
+            {% endif %}
+            {% if message %}
+                <p>{{ message }}</p>
+            {% endif %}
         {% endif %}
         <a href="/verify/" class="btn-link">Verify Another</a>
     

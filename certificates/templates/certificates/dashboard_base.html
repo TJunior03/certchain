@@ -240,6 +240,24 @@
             border: 1px solid #4caf5040;
         }
 
+        .badge-pending {
+            background: #f59e0b20;
+            color: #fbbf24;
+            border: 1px solid #f59e0b50;
+        }
+
+        .badge-approved {
+            background: #1b5e2040;
+            color: #4caf50;
+            border: 1px solid #4caf5040;
+        }
+
+        .badge-rejected {
+            background: #7f1d1d40;
+            color: #f87171;
+            border: 1px solid #f8717150;
+        }
+
         .badge-warning {
             background: #e6510020;
             color: #ff9800;
@@ -295,7 +313,10 @@
                     <span class="nav-icon">🎓</span> Certificates
                 </a>
                 <a href="/dashboard/issue/" class="nav-link {% block nav_issue %}{% endblock %}">
-                    <span class="nav-icon">➕</span> Issue Certificate
+                    <span class="nav-icon">➕</span> Register Credential
+                </a>
+                <a href="/dashboard/requests/" class="nav-link {% block nav_requests %}{% endblock %}">
+                     <span class="nav-icon">📋</span> Requests
                 </a>
             </div>
 

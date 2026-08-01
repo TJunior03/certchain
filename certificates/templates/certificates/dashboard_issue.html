@@ -1,11 +1,11 @@
 {% extends 'certificates/dashboard_base.html' %}
-{% block title %}Issue Certificate{% endblock %}
-{% block page_title %}Issue Certificate{% endblock %}
+{% block title %}Register Credential{% endblock %}
+{% block page_title %}Register Credential{% endblock %}
 {% block nav_issue %}active{% endblock %}
 
 {% block content %}
 <div class="card" style="max-width: 600px;">
-    <p class="card-title">➕ Issue New Certificate</p>
+    <p class="card-title">➕ Register Academic Credential</p>
 
     {% if error %}
     <div style="padding:14px; background:#7f000040; border:1px solid #ef5350;
@@ -18,43 +18,23 @@
     <div style="padding:20px; background:#1b5e2040; border:1px solid #4caf50;
                 border-radius:8px; margin-bottom:20px;">
         <p style="color:#4caf50; font-weight:600; margin-bottom:12px;">
-            ✅ Certificate Issued Successfully!
+            ✅ Credential Registered Successfully
         </p>
         <p style="color:#b0bec5; font-size:13px;">Student: <strong style="color:#fff;">{{ certificate.student_name }}</strong></p>
         <p style="color:#b0bec5; font-size:13px;">Course: <strong style="color:#fff;">{{ certificate.course_name }}</strong></p>
+        <p style="color:#b0bec5; font-size:13px; margin-top:8px;">Status:
+            <span class="badge badge-pending">Pending</span>
+        </p>
         <p style="color:#b0bec5; font-size:13px; margin-top:8px;">Certificate ID:</p>
         <div style="background:#0a0f1e; border:1px solid #1565c0; border-radius:6px;
                     padding:10px; font-family:monospace; font-size:12px;
                     color:#4fc3f7; word-break:break-all; margin-top:4px;">
             {{ certificate.certificate_id }}
         </div>
-        <p style="color:#b0bec5; font-size:13px; margin-top:12px;">SHA-256 Hash:</p>
-        <div style="background:#0a0f1e; border:1px solid #1565c0; border-radius:6px;
-                    padding:10px; font-family:monospace; font-size:12px;
-                    color:#4fc3f7; word-break:break-all; margin-top:4px;">
-            {{ certificate.certificate_hash }}
-        </div>
-        {% if tx_hash %}
-        <p style="color:#b0bec5; font-size:13px; margin-top:12px;">⛓ Blockchain TX Hash:</p>
-        <div style="background:#0a0f1e; border:1px solid #4a148c; border-radius:6px;
-                    padding:10px; font-family:monospace; font-size:12px;
-                    color:#ce93d8; word-break:break-all; margin-top:4px;">
-            {{ tx_hash }}
-        </div>
-        {% endif %}
-        {% if email_sent %}
-        <p style="color:#4caf50; font-size:13px; margin-top:12px;">
-            ✅ Certificate credentials sent to {{ certificate.student_email }}
+        <p style="color:#b0bec5; font-size:13px; margin-top:12px;">
+            The request is awaiting institutional approval. Blockchain anchoring,
+            receipt generation, and email delivery will run only after approval.
         </p>
-        {% elif certificate.student_email %}
-        <p style="color:#ff9800; font-size:13px; margin-top:12px;">
-            ⚠ Email could not be sent to {{ certificate.student_email }}
-        </p>
-        {% else %}
-        <p style="color:#546e7a; font-size:13px; margin-top:12px;">
-            ℹ No student email provided — credentials not sent.
-        </p>
-        {% endif %}
     </div>
     {% endif %}
 
@@ -114,7 +94,7 @@
                 style="width:100%; padding:14px; background:#1565c0;
                        border:none; border-radius:8px; color:white;
                        font-size:15px; font-weight:600; cursor:pointer;">
-            Generate & Issue Certificate
+            Register Credential for Verification
         </button>
     </form>
 </div>

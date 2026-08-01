@@ -5,40 +5,47 @@
 {% block content %}
 <div class="card">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <p class="card-title" style="margin-bottom:0;">
-            All Certificates ({{ certificates|length }})
-        </p>
-        <a href="/dashboard/issue/" class="btn btn-primary">➕ Issue New</a>
+        <p class="card-title" style="margin-bottom:0;">All Certificates ({{ certificates|length }})</p>
+        <a href="/dashboard/issue/" class="btn btn-primary">➕ New Request</a>
     </div>
     <table>
         <thead>
             <tr>
                 <th>Student</th>
                 <th>Course</th>
+                <th>Status</th>
                 <th>Issue Date</th>
                 <th>Certificate ID</th>
                 <th>Hash</th>
                 <th>Blockchain</th>
                 <th>Issuer</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
             {% for cert in certificates %}
             <tr>
-                <td style="color:#e0e6f0; font-weight:600;">
-                    {{ cert.student_name }}
-                </td>
+                <td style="color:#e0e6f0; font-weight:600;">{{ cert.student_name }}</td>
                 <td>{{ cert.course_name }}</td>
-                <td>{{ cert.issue_date }}</td>
                 <td>
-                    <span class="hash-short">
-                        {{ cert.certificate_id|stringformat:"s"|slice:":8" }}...
-                    </span>
+                    {% if cert.status == 'pending' %}
+                        <span class="badge badge-pending">⏳ Pending</span>
+                    {% elif cert.status == 'staff_approved' %}
+                        <span class="badge" style="background:#e3f2fd; color:#1565c0;">📋 Staff Approved</span>
+                    {% elif cert.status == 'verified' %}
+                        <span class="badge badge-approved">✅ Verified</span>
+                    {% elif cert.status == 'rejected' %}
+                        <span class="badge badge-rejected">❌ Rejected</span>
+                    {% endif %}
                 </td>
+                <td>{{ cert.issue_date }}</td>
+                <td><span class="hash-short">{{ cert.certificate_id|stringformat:"s"|slice:":8" }}...</span></td>
                 <td>
-                    <span class="hash-short">
-                        {{ cert.certificate_hash|slice:":12" }}...
-                    </span>
+                    {% if cert.certificate_hash %}
+                        <span class="hash-short">{{ cert.certificate_hash|slice:":12" }}...</span>
+                    {% else %}
+                        <span style="color:#546e7a;">Not generated</span>
+                    {% endif %}
                 </td>
                 <td>
                     {% if cert.blockchain_anchored %}
@@ -48,13 +55,10 @@
                     {% endif %}
                 </td>
                 <td>{{ cert.issuer }}</td>
+                <td><a href="/dashboard/requests/{{ cert.certificate_id }}/" style="color:#4fc3f7; font-size:13px;">View →</a></td>
             </tr>
             {% empty %}
-            <tr>
-                <td colspan="7" style="text-align:center; color:#546e7a;">
-                    No certificates found.
-                </td>
-            </tr>
+            <tr><td colspan="9" style="text-align:center; color:#546e7a;">No certificates found.</td></tr>
             {% endfor %}
         </tbody>
     </table>
