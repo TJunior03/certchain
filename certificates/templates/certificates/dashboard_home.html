@@ -13,7 +13,7 @@
     <div class="stat-card">
         <p class="stat-label">Blockchain Anchored</p>
         <p class="stat-value" style="color:#ce93d8;">{{ blockchain_anchored }}</p>
-        <p class="stat-sub">With tx_hash</p>
+        <p class="stat-sub">Verified on chain</p>
     </div>
     <div class="stat-card">
         <p class="stat-label">Pending Approval</p>
@@ -33,7 +33,7 @@
     <div class="stat-card">
         <p class="stat-label">Not Anchored</p>
         <p class="stat-value" style="color:#ff9800;">{{ not_anchored }}</p>
-        <p class="stat-sub">DB only</p>
+        <p class="stat-sub">Pending, approved, or rejected</p>
     </div>
     <div class="stat-card">
         <p class="stat-label">Issued By You</p>
@@ -65,9 +65,11 @@
                 <td style="color:#e0e6f0;">{{ cert.student_name }}</td>
                 <td>{{ cert.course_name }}</td>
                 <td>
-                    {% if cert.status == 'approved' %}
+                    {% if cert.is_staff_approved %}
                         <span class="badge badge-approved">Approved</span>
-                    {% elif cert.status == 'rejected' %}
+                    {% elif cert.is_verified %}
+                        <span class="badge badge-approved">Verified</span>
+                    {% elif cert.is_rejected %}
                         <span class="badge badge-rejected">Rejected</span>
                     {% else %}
                         <span class="badge badge-pending">Pending</span>
@@ -78,7 +80,7 @@
                     {% if cert.blockchain_anchored %}
                         <span class="badge badge-blockchain">⛓ Anchored</span>
                     {% else %}
-                        <span class="badge badge-warning">DB Only</span>
+                        <span class="badge badge-warning">Not Anchored</span>
                     {% endif %}
                 </td>
                 <td>{{ cert.issuer }}</td>

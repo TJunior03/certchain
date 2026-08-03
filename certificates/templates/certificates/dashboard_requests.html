@@ -1,4 +1,5 @@
 {% extends 'certificates/dashboard_base.html' %}
+{% load certchain_extras %}
 {% block title %}Verification Requests{% endblock %}
 {% block page_title %}Verification Requests{% endblock %}
 {% block nav_requests %}active{% endblock %}
@@ -118,7 +119,7 @@
                 <td style="color:#e0e6f0;">{{ cert.student_name }}</td>
                 <td>{{ cert.course_name }}</td>
                 <td style="color:#546e7a;">{{ cert.verified_at|date:"M d, Y" }}</td>
-                <td><span class="badge badge-blockchain">⛓ Anchored</span></td>
+                <td><span class="badge badge-blockchain">⛓ {{ cert.blockchain_label }}</span></td>
             </tr>
             {% endfor %}
         </tbody>
@@ -126,7 +127,36 @@
 </div>
 {% endif %}
 
-{% if not pending and not staff_done and not verified %}
+<!-- Rejected -->
+{% if rejected %}
+<div class="card">
+    <p class="card-title" style="color:#ef5350;">❌ Rejected ({{ rejected_count }})</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Verification ID</th>
+                <th>Student</th>
+                <th>Certificate Type</th>
+                <th>Rejected Reason</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cert in rejected %}
+            <tr>
+                <td><span class="hash-short">{{ cert.verification_id }}</span></td>
+                <td style="color:#e0e6f0; font-weight:600;">{{ cert.student_name }}</td>
+                <td>{{ cert.course_name }}</td>
+                <td style="color:#546e7a;">{{ cert.rejection_reason|default:"No reason provided." }}</td>
+                <td><a href="/dashboard/requests/{{ cert.certificate_id }}/" style="color:#4fc3f7; font-size:13px;">Review →</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if not pending and not staff_done and not verified and not rejected %}
 <div class="card" style="text-align:center; padding:60px;">
     <p style="font-size:48px;">📭</p>
     <p style="color:#546e7a; margin-top:16px;">No verification requests yet.</p>

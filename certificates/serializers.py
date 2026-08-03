@@ -3,24 +3,50 @@ from .models import Certificate, TransactionLog
 
 
 class CertificateSerializer(serializers.ModelSerializer):
+    verification_id = serializers.CharField(read_only=True)
+    status_label = serializers.SerializerMethodField()
+    blockchain_anchored = serializers.BooleanField(read_only=True)
+    blockchain_status = serializers.SerializerMethodField()
+    tx_hash = serializers.SerializerMethodField()
+
+    def get_tx_hash(self, obj):
+        tx_log = obj.transaction_log
+        return tx_log.tx_hash if tx_log else None
+
+    def get_status_label(self, obj):
+        return obj.status_label
+
+    def get_blockchain_status(self, obj):
+        return obj.blockchain_label
+
     class Meta:
         model  = Certificate
         fields = [
             'certificate_id',
+            'verification_id',
             'student_name',
             'student_email',
             'course_name',
             'issue_date',
             'status',
+            'status_label',
             'certificate_hash',
+            'blockchain_anchored',
+            'blockchain_status',
+            'tx_hash',
             'pdf_file',
             'issuer',
             'created_at'
         ]
         read_only_fields = [
             'certificate_id',
+            'verification_id',
             'status',
+            'status_label',
             'certificate_hash',
+            'blockchain_anchored',
+            'blockchain_status',
+            'tx_hash',
             'created_at'
         ]
 
@@ -38,10 +64,14 @@ class CertificateIssueSerializer(serializers.ModelSerializer):
 class VerifyResponseSerializer(serializers.Serializer):
     valid            = serializers.BooleanField()
     certificate_id   = serializers.UUIDField(required=False)
+    verification_id  = serializers.CharField(required=False)
     student_name     = serializers.CharField(required=False)
     course_name      = serializers.CharField(required=False)
     issue_date       = serializers.DateField(required=False)
     certificate_hash = serializers.CharField(required=False)
+    status           = serializers.CharField(required=False)
+    status_label     = serializers.CharField(required=False)
+    blockchain_anchored = serializers.BooleanField(required=False)
     message          = serializers.CharField()
 
 

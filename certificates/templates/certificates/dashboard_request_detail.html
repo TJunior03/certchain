@@ -1,4 +1,5 @@
 {% extends 'certificates/dashboard_base.html' %}
+{% load certchain_extras %}
 {% block title %}Request Detail{% endblock %}
 {% block page_title %}Verification Request — {{ cert.verification_id }}{% endblock %}
 {% block nav_requests %}active{% endblock %}
@@ -106,14 +107,20 @@
         </tr>
         <tr>
             <td style="color:#546e7a;">Certificate Hash</td>
-            <td style="font-family:monospace; font-size:12px; color:#4fc3f7;">
-                {{ cert.certificate_hash }}
+            <td>
+                <span class="hash-inline">
+                    <span class="hash-preview">{{ cert.certificate_hash|truncate_hash }}</span>
+                    <button type="button" class="copy-hash-btn" onclick="copyHash('{{ cert.certificate_hash|escapejs }}', this)">Copy</button>
+                </span>
             </td>
         </tr>
         <tr>
             <td style="color:#546e7a;">Transaction Hash</td>
-            <td style="font-family:monospace; font-size:12px; color:#ce93d8;">
-                {{ tx_log.tx_hash }}
+            <td>
+                <span class="hash-inline">
+                    <span class="hash-preview">{{ tx_log.tx_hash|truncate_hash }}</span>
+                    <button type="button" class="copy-hash-btn" onclick="copyHash('{{ tx_log.tx_hash|escapejs }}', this)">Copy</button>
+                </span>
             </td>
         </tr>
         <tr>

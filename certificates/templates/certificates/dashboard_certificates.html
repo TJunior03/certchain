@@ -1,4 +1,5 @@
 {% extends 'certificates/dashboard_base.html' %}
+{% load certchain_extras %}
 {% block page_title %}Certificates{% endblock %}
 {% block nav_certs %}active{% endblock %}
 
@@ -28,31 +29,22 @@
                 <td style="color:#e0e6f0; font-weight:600;">{{ cert.student_name }}</td>
                 <td>{{ cert.course_name }}</td>
                 <td>
-                    {% if cert.status == 'pending' %}
-                        <span class="badge badge-pending">⏳ Pending</span>
-                    {% elif cert.status == 'staff_approved' %}
-                        <span class="badge" style="background:#e3f2fd; color:#1565c0;">📋 Staff Approved</span>
-                    {% elif cert.status == 'verified' %}
-                        <span class="badge badge-approved">✅ Verified</span>
-                    {% elif cert.status == 'rejected' %}
-                        <span class="badge badge-rejected">❌ Rejected</span>
-                    {% endif %}
+                    <span class="badge {{ cert.status_badge_class }}">{{ cert.status_label }}</span>
                 </td>
                 <td>{{ cert.issue_date }}</td>
-                <td><span class="hash-short">{{ cert.certificate_id|stringformat:"s"|slice:":8" }}...</span></td>
+                <td><span class="hash-short">{{ cert.verification_id }}</span></td>
                 <td>
                     {% if cert.certificate_hash %}
-                        <span class="hash-short">{{ cert.certificate_hash|slice:":12" }}...</span>
+                        <span class="hash-inline">
+                            <span class="hash-preview">{{ cert.certificate_hash|truncate_hash }}</span>
+                            <button type="button" class="copy-hash-btn" onclick="copyHash('{{ cert.certificate_hash|escapejs }}', this)">Copy</button>
+                        </span>
                     {% else %}
                         <span style="color:#546e7a;">Not generated</span>
                     {% endif %}
                 </td>
                 <td>
-                    {% if cert.blockchain_anchored %}
-                        <span class="badge badge-blockchain">⛓ Anchored</span>
-                    {% else %}
-                        <span class="badge badge-warning">DB Only</span>
-                    {% endif %}
+                    <span class="badge {{ cert.blockchain_badge_class }}">⛓ {{ cert.blockchain_label }}</span>
                 </td>
                 <td>{{ cert.issuer }}</td>
                 <td><a href="/dashboard/requests/{{ cert.certificate_id }}/" style="color:#4fc3f7; font-size:13px;">View →</a></td>

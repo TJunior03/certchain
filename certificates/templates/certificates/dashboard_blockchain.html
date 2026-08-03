@@ -1,4 +1,5 @@
 {% extends 'certificates/dashboard_base.html' %}
+{% load certchain_extras %}
 {% block page_title %}Blockchain Logs{% endblock %}
 {% block nav_blockchain %}active{% endblock %}
 
@@ -22,11 +23,15 @@
             {% for log in logs %}
             <tr>
                 <td>
-                    <span class="hash-short">{{ log.certificate_hash|slice:":16" }}...</span>
+                    <span class="hash-inline">
+                        <span class="hash-preview">{{ log.certificate_hash|truncate_hash }}</span>
+                        <button type="button" class="copy-hash-btn" onclick="copyHash('{{ log.certificate_hash|escapejs }}', this)">Copy</button>
+                    </span>
                 </td>
                 <td>
-                    <span class="hash-short" style="color:#ce93d8;">
-                        {{ log.tx_hash|slice:":16" }}...
+                    <span class="hash-inline">
+                        <span class="hash-preview" style="color:#ce93d8;">{{ log.tx_hash|truncate_hash }}</span>
+                        <button type="button" class="copy-hash-btn" onclick="copyHash('{{ log.tx_hash|escapejs }}', this)">Copy</button>
                     </span>
                 </td>
                 <td>

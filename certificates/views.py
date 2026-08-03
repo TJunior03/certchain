@@ -1,6 +1,8 @@
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from .forms import CertificateForm
 from .models import Certificate, TransactionLog
+from .pdf_generator import generate_certificate_pdf
 from .utils import approve_certificate_workflow
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -53,14 +55,22 @@ def verify_certificate(request, certificate_id=None):
         lookup_certificate_id = request.POST.get('certificate_id', '').strip()
 
     if lookup_certificate_id:
-        try:
-            certificate = Certificate.objects.get(certificate_id=lookup_certificate_id)
-            if certificate.status == Certificate.STATUS_VERIFIED:
-                result = True
+        certificate = Certificate.resolve_lookup(lookup_certificate_id)
 
-                tx_log = TransactionLog.objects.filter(
-                    certificate_hash=certificate.certificate_hash
-                ).first()
+        if certificate:
+            tx_log = certificate.transaction_log
+
+            if certificate.status == Certificate.STATUS_VERIFIED:
+                if request.GET.get('download'):
+                    tx_hash = tx_log.tx_hash if tx_log else 'Not available'
+                    pdf_buffer = generate_certificate_pdf(certificate, tx_hash)
+                    response = HttpResponse(pdf_buffer, content_type='application/pdf')
+                    response['Content-Disposition'] = (
+                        f'attachment; filename="certchain_verification_{certificate.certificate_id}.pdf"'
+                    )
+                    return response
+
+                result = True
 
                 if tx_log:
                     blockchain_info = {
@@ -70,13 +80,13 @@ def verify_certificate(request, certificate_id=None):
                     }
             else:
                 result = False
-                message = (
-                    'Certificate record found, but verification is not approved yet.'
-                    if certificate.status == Certificate.STATUS_PENDING
-                    else 'This certificate request was rejected by the institution.'
-                )
-
-        except Certificate.DoesNotExist:
+                if certificate.status == Certificate.STATUS_PENDING:
+                    message = 'Certificate record found, but verification is still pending institutional approval.'
+                elif certificate.status == Certificate.STATUS_STAFF:
+                    message = 'Certificate has been approved and is awaiting blockchain anchoring.'
+                else:
+                    message = 'This certificate was rejected by the institution.'
+        else:
             result = False
             message = 'Certificate ID not found in the system.'
 
@@ -85,6 +95,7 @@ def verify_certificate(request, certificate_id=None):
         'certificate'    : certificate,
         'blockchain_info': blockchain_info,
         'message'        : message,
+        'timeline_steps'  : certificate.timeline_steps() if certificate else [],
     })
 
 @login_required
@@ -92,15 +103,11 @@ def dashboard_home(request):
     total_certificates = Certificate.objects.count()
     issued_by_me = Certificate.objects.filter(issuer=request.user).count()
     pending_count = Certificate.objects.filter(status=Certificate.STATUS_PENDING).count()
-    staff_count = Certificate.objects.filter(status=Certificate.STATUS_STAFF).count()
+    approved_count = Certificate.objects.filter(status=Certificate.STATUS_STAFF).count()
     verified_count = Certificate.objects.filter(status=Certificate.STATUS_VERIFIED).count()
     rejected_count = Certificate.objects.filter(status=Certificate.STATUS_REJECTED).count()
 
-    anchored_hashes = TransactionLog.objects.values_list('certificate_hash', flat=True)
-    blockchain_anchored = Certificate.objects.filter(
-        certificate_hash__in=anchored_hashes,
-        status=Certificate.STATUS_VERIFIED,
-    ).count()
+    blockchain_anchored = verified_count
     not_anchored = total_certificates - blockchain_anchored
     recent_certificates = list(Certificate.objects.all().order_by('-created_at')[:5])
 
@@ -108,7 +115,7 @@ def dashboard_home(request):
         'total_certificates': total_certificates,
         'issued_by_me': issued_by_me,
         'pending_count': pending_count,
-        'staff_count': staff_count,
+        'approved_count': approved_count,
         'verified_count': verified_count,
         'rejected_count': rejected_count,
         'blockchain_anchored': blockchain_anchored,
@@ -175,6 +182,7 @@ def dashboard_requests(request):
         'staff_done_count': staff_done.count(),
         'verified_count'  : verified.count(),
         'rejected_count'  : rejected.count(),
+        'has_requests'    : any([pending.exists(), staff_done.exists(), verified.exists(), rejected.exists()]),
     })
 
 
@@ -225,9 +233,7 @@ def dashboard_request_detail(request, certificate_id):
                 'success': 'Request rejected.'
             })
 
-    tx_log = TransactionLog.objects.filter(
-        certificate_hash=cert.certificate_hash
-    ).first()
+    tx_log = cert.transaction_log
 
     return render(request, 'certificates/dashboard_request_detail.html', {
         'cert'  : cert,

@@ -2,6 +2,7 @@ import uuid
 import re
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 VERIFICATION_ID_PATTERN = re.compile(r'^VR-(\d{4})-(\d{6})$')
@@ -86,6 +87,129 @@ class Certificate(models.Model):
     def __str__(self):
         return f"{self.verification_id} — {self.student_name}"
 
+    @classmethod
+    def resolve_lookup(cls, lookup_value):
+        if not lookup_value:
+            return None
+
+        normalized = str(lookup_value).strip()
+        if not normalized:
+            return None
+
+        try:
+            uuid.UUID(normalized)
+            certificate = cls.objects.filter(certificate_id=normalized).first()
+            if certificate:
+                return certificate
+        except (ValueError, TypeError):
+            pass
+
+        return cls.objects.filter(verification_id=normalized).first()
+
+    @property
+    def status_label(self):
+        return {
+            self.STATUS_PENDING: 'Pending',
+            self.STATUS_STAFF: 'Approved',
+            self.STATUS_VERIFIED: 'Verified',
+            self.STATUS_REJECTED: 'Rejected',
+        }.get(self.status, 'Pending')
+
+    @property
+    def status_badge_class(self):
+        return {
+            self.STATUS_PENDING: 'badge-pending',
+            self.STATUS_STAFF: 'badge-approved',
+            self.STATUS_VERIFIED: 'badge-approved',
+            self.STATUS_REJECTED: 'badge-rejected',
+        }.get(self.status, 'badge-pending')
+
+    @property
+    def blockchain_anchored(self):
+        return self.status == self.STATUS_VERIFIED
+
+    @property
+    def blockchain_label(self):
+        return 'Anchored' if self.blockchain_anchored else 'Not Anchored'
+
+    @property
+    def blockchain_badge_class(self):
+        return 'badge-blockchain' if self.blockchain_anchored else 'badge-warning'
+
+    @property
+    def transaction_log(self):
+        return TransactionLog.objects.filter(
+            certificate_hash=self.certificate_hash
+        ).first()
+
+    def timeline_steps(self):
+        tx_log = self.transaction_log
+
+        if self.status == self.STATUS_REJECTED:
+            return [
+                {
+                    'label': 'Credential Registered',
+                    'state': 'completed',
+                    'timestamp': self.created_at,
+                },
+                {
+                    'label': 'Institution Review',
+                    'state': 'blocked',
+                    'timestamp': self.staff_approved_at,
+                },
+                {
+                    'label': 'Rejected',
+                    'state': 'completed',
+                    'timestamp': self.verified_at or self.staff_approved_at or self.created_at,
+                },
+                {
+                    'label': 'SHA-256 Generated',
+                    'state': 'blocked',
+                    'timestamp': None,
+                },
+                {
+                    'label': 'Recorded on Ethereum',
+                    'state': 'blocked',
+                    'timestamp': None,
+                },
+                {
+                    'label': 'Verification Receipt Generated',
+                    'state': 'blocked',
+                    'timestamp': None,
+                },
+            ]
+
+        approved = self.status in {self.STATUS_STAFF, self.STATUS_VERIFIED}
+        verified = self.status == self.STATUS_VERIFIED
+
+        return [
+            {
+                'label': 'Credential Registered',
+                'state': 'completed' if self.created_at else 'upcoming',
+                'timestamp': self.created_at,
+            },
+            {
+                'label': 'Institution Approved',
+                'state': 'completed' if approved else 'current' if self.status == self.STATUS_PENDING else 'blocked',
+                'timestamp': self.staff_approved_at,
+            },
+            {
+                'label': 'SHA-256 Generated',
+                'state': 'completed' if verified else 'upcoming',
+                'timestamp': self.verified_at if verified else None,
+            },
+            {
+                'label': 'Recorded on Ethereum',
+                'state': 'completed' if verified else 'upcoming',
+                'timestamp': tx_log.timestamp if tx_log else None,
+            },
+            {
+                'label': 'Verification Receipt Generated',
+                'state': 'completed' if verified else 'upcoming',
+                'timestamp': self.verified_at if verified else None,
+            },
+        ]
+
     @property
     def is_pending(self):
         return self.status == self.STATUS_PENDING
@@ -101,12 +225,6 @@ class Certificate(models.Model):
     @property
     def is_rejected(self):
         return self.status == self.STATUS_REJECTED
-
-    @property
-    def blockchain_anchored(self):
-        return TransactionLog.objects.filter(
-            certificate_hash=self.certificate_hash
-        ).exists()
 
 
 class TransactionLog(models.Model):

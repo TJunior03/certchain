@@ -45,7 +45,7 @@ class CertificateIssueAPIView(APIView):
 class CertificateVerifyAPIView(APIView):
     """
     POST /api/verify/
-    Verify a certificate by UUID.
+    Verify a certificate by UUID or verification ID.
     Also returns blockchain record if available.
     Open to anyone.
     """
@@ -60,52 +60,56 @@ class CertificateVerifyAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        try:
-            certificate = Certificate.objects.get(certificate_id=certificate_id)
+        certificate = Certificate.resolve_lookup(certificate_id)
 
-            if certificate.status != Certificate.STATUS_VERIFIED:
-                status_message = (
-                    'Certificate exists but is pending institutional approval.'
-                    if certificate.status == Certificate.STATUS_PENDING
-                    else 'Certificate request has been rejected by the institution.'
-                )
-                return Response({
-                    'valid': False,
-                    'message': status_message,
-                    'certificate_id': str(certificate.certificate_id),
-                    'status': certificate.status,
-                }, status=status.HTTP_200_OK)
-
-            # Check blockchain record
-            tx_log = TransactionLog.objects.filter(
-                certificate_hash=certificate.certificate_hash
-            ).first()
-
-            blockchain_data = None
-            if tx_log:
-                blockchain_data = {
-                    'tx_hash'   : tx_log.tx_hash,
-                    'blockchain': tx_log.blockchain,
-                    'timestamp' : str(tx_log.timestamp)
-                }
-
-            return Response({
-                'valid'            : True,
-                'message'          : 'Certificate is valid.',
-                'certificate_id'   : str(certificate.certificate_id),
-                'student_name'     : certificate.student_name,
-                'course_name'      : certificate.course_name,
-                'issue_date'       : str(certificate.issue_date),
-                'status'           : certificate.status,
-                'certificate_hash' : certificate.certificate_hash,
-                'blockchain_record': blockchain_data
-            }, status=status.HTTP_200_OK)
-
-        except Certificate.DoesNotExist:
+        if certificate is None:
             return Response({
                 'valid'  : False,
                 'message': 'Certificate not found — invalid or tampered.',
             }, status=status.HTTP_404_NOT_FOUND)
+
+        if certificate.status != Certificate.STATUS_VERIFIED:
+            status_message = (
+                'Certificate exists but is pending institutional approval.'
+                if certificate.status == Certificate.STATUS_PENDING
+                else 'Certificate has been approved and is awaiting blockchain anchoring.'
+                if certificate.status == Certificate.STATUS_STAFF
+                else 'Certificate request has been rejected by the institution.'
+            )
+            return Response({
+                'valid': False,
+                'message': status_message,
+                'certificate_id': str(certificate.certificate_id),
+                'verification_id': certificate.verification_id,
+                'status': certificate.status,
+                'status_label': certificate.status_label,
+                'blockchain_anchored': certificate.blockchain_anchored,
+            }, status=status.HTTP_200_OK)
+
+        tx_log = certificate.transaction_log
+
+        blockchain_data = None
+        if tx_log:
+            blockchain_data = {
+                'tx_hash'   : tx_log.tx_hash,
+                'blockchain': tx_log.blockchain,
+                'timestamp' : str(tx_log.timestamp)
+            }
+
+        return Response({
+            'valid'             : True,
+            'message'           : 'Certificate is valid.',
+            'certificate_id'    : str(certificate.certificate_id),
+            'verification_id'   : certificate.verification_id,
+            'student_name'      : certificate.student_name,
+            'course_name'       : certificate.course_name,
+            'issue_date'        : str(certificate.issue_date),
+            'status'            : certificate.status,
+            'status_label'      : certificate.status_label,
+            'certificate_hash'  : certificate.certificate_hash,
+            'blockchain_anchored': certificate.blockchain_anchored,
+            'blockchain_record' : blockchain_data,
+        }, status=status.HTTP_200_OK)
 
 
 class CertificateListAPIView(APIView):
@@ -121,13 +125,7 @@ class CertificateListAPIView(APIView):
         data = []
 
         for cert in certificates:
-            tx_log = TransactionLog.objects.filter(
-                certificate_hash=cert.certificate_hash
-            ).first()
-
             cert_data = CertificateSerializer(cert).data
-            cert_data['blockchain_anchored'] = tx_log is not None
-            cert_data['tx_hash'] = tx_log.tx_hash if tx_log else None
 
             data.append(cert_data)
 
